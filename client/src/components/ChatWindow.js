@@ -10,8 +10,8 @@ import {
   Button,
 } from 'semantic-ui-react'
 import styled from 'styled-components'
-import ChatMessage from './ChatMessage'
 import axios from 'axios'
+import ChatMessage from './ChatMessage'
 
 const MainWindow = styled(Segment)`
   border: 3px solid black;
@@ -36,9 +36,19 @@ class ChatWindow extends React.Component {
   state = { message: '' }
 
   componentDidMount() {
-      this.props.dispatch(setFlash('Welcome to React Chat', 'green'))
+    window.MessageBus.start()
+    const { dispatch } = this.props
+    dispatch(setFlash('Welcome to React Chat', 'green'))
+
+    window.MessageBus.subscribe("/chat_channel", (data) => {
+      dispatch(addMessage(data))
+    })
   }
 
+  componentWillUnmount() {
+    window.MessageBus.unsubscribe("/chat_channel")
+  }
+  
   displayMessages = () => {
     const { messages } = this.props
 
@@ -53,15 +63,15 @@ class ChatWindow extends React.Component {
   }
 
   setMessage = (e) => {
-      this.setState({ message: e.target.value })
+    this.setState({ message: e.target.value })
   }
 
   addMessage = (e) => {
-      e.preventDefault()
-      const {`` user: { email } } = this.props
-      const { message } = this.state
-      axios.post('/api/messages', { email, body: message })
-        .then( () => this.setState({ message: '' }))
+    e.preventDefault()
+    const { user: { email } } = this.props
+    const { message } = this.state
+    axios.post('/api/messages', { email, body: message })
+      .then( () => this.setState({ message: '' }) )
   }
 
   render() {
@@ -101,3 +111,5 @@ const mapStateToProps = (state) => {
 }
 
 export default connect(mapStateToProps)(ChatWindow)
+
+
